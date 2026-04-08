@@ -1,1 +1,1 @@
-"# Deneme-Kontrol-" 
+Metin çıktısını deneme kontrolü yaparken okuyabilen ve şıkları kodlama ile söyleyen yapay zeka tarafından oluşturulmuş site.
