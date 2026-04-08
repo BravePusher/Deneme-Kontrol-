@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deneme Okuma Asistanı</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .value-badge {
+            min-width: 3rem;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: var(--border);
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            min-height: 1.25rem;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Deneme Okuma Asistanı</h1>
+        
+        <div class="form-group">
+            <label for="inputData">Cevap Anahtarı (Örn: 1A 2B 3C...)</label>
+            <textarea id="inputData" placeholder="Buraya yapıştırın..."></textarea>
+        </div>
+
+        <div class="controls">
+            <div class="form-group">
+                <label for="speedRange">Okuma Hızı</label>
+                <div class="slider-container">
+                    <input type="range" id="speedRange" min="0.5" max="2.0" step="0.1" value="1.0">
+                    <span id="speedValue" class="value-badge">1.0</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="pauseRange">4 Soruda Bir Duraksama (Saniye)</label>
+                <div class="slider-container">
+                    <input type="range" id="pauseRange" min="0" max="5" step="0.5" value="1.0">
+                    <span id="pauseValue" class="value-badge">1.0s</span>
+                </div>
+            </div>
+        </div>
+
+        <button id="readBtn">Oku</button>
+        <div id="status" class="status">Hazır</div>
+    </div>
+
+    <script>
+        const inputData = document.getElementById('inputData');
+        const speedRange = document.getElementById('speedRange');
+        const speedValue = document.getElementById('speedValue');
+        const pauseRange = document.getElementById('pauseRange');
+        const pauseValue = document.getElementById('pauseValue');
+        const readBtn = document.getElementById('readBtn');
+        const statusEl = document.getElementById('status');
+
+        const cityMap = {
+            'A': 'Adana',
+            'B': 'Bursa',
+            'C': 'Ceyhan',
+            'D': 'Denizli',
+            'E': 'Edirne'
+        };
+
+        speedRange.addEventListener('input', () => {
+            speedValue.textContent = speedRange.value;
+        });
+
+        pauseRange.addEventListener('input', () => {
+            pauseValue.textContent = pauseRange.value + 's';
+        });
+
+        let isReading = false;
+
+        async function speak(text, rate) {
+            return new Promise((resolve) => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'tr-TR';
+                utterance.rate = rate;
+                utterance.onend = resolve;
+                utterance.onerror = resolve;
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        readBtn.addEventListener('click', async () => {
+            if (isReading) {
+                window.speechSynthesis.cancel();
+                isReading = false;
+                readBtn.textContent = 'Oku';
+                statusEl.textContent = 'Durduruldu';
+                return;
+            }
+
+            const text = inputData.value;
+            const regex = /(\d+)\s*([A-Ea-e])/g;
+            const matches = [...text.matchAll(regex)];
+
+            if (matches.length === 0) {
+                statusEl.textContent = 'Hata: Geçerli veri bulunamadı!';
+                return;
+            }
+
+            isReading = true;
+            readBtn.textContent = 'Durdur';
+            
+            for (let i = 0; i < matches.length; i++) {
+                if (!isReading) break;
+
+                const num = matches[i][1];
+                const letter = matches[i][2].toUpperCase();
+                const cityName = cityMap[letter] || letter;
+                const phrase = `${num} ${cityName}`;
+
+                statusEl.innerHTML = `Okunuyor: <span class="highlight">${phrase}</span> (${i + 1}/${matches.length})`;
+                
+                await speak(phrase, parseFloat(speedRange.value));
+
+                // Every 4 questions, pause
+                if ((i + 1) % 4 === 0 && (i + 1) < matches.length) {
+                    const pauseTime = parseFloat(pauseRange.value) * 1000;
+                    if (pauseTime > 0) {
+                        statusEl.textContent = 'Duraksıyor...';
+                        await sleep(pauseTime);
+                    }
+                } else {
+                    // Small gap between normal questions
+                    await sleep(200);
+                }
+            }
+
+            isReading = false;
+            readBtn.textContent = 'Oku';
+            statusEl.textContent = 'Tamamlandı';
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,5 @@
+{
+  "name": "Deneme Okuma Uygulaması",
+  "description": "Cevap anahtarlarını sesli okuyan, hız ve duraksama kontrollü yardımcı uygulama.",
+  "requestFramePermissions": []
+}
